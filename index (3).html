@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Хелперы</title>
+<style>
+  :root{
+    --page: #EFE7D6;
+    --body-1: #3B2C22;
+    --body-2: #2A1F18;
+    --screen: #CBD1BE;
+    --screen-ink: #2E332A;
+    --cream: #EDE2C4;
+    --cream-edge: #B9A97D;
+    --cream-ink: #2A1E0E;
+    --mocha: #A6876A;
+    --mocha-edge: #6E5138;
+    --mocha-ink: #FBF3E4;
+    --rust: #C9642F;
+    --rust-edge: #8F3E17;
+    --rust-ink: #FBEEE0;
+    --bubble-bg: #F4ECD8;
+    --bubble-ink: #2A2013;
+    --bubble-shadow: #C77E96;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+
+  body{
+    font-family: 'Trebuchet MS', Verdana, sans-serif;
+    background: var(--page);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 48px 16px 100px;
+  }
+
+  .calc{
+    width: 100%;
+    max-width: 760px;
+    background: linear-gradient(160deg, var(--body-1), var(--body-2));
+    border-radius: 40px;
+    padding: 26px 26px 34px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 -8px 18px rgba(0,0,0,0.35) inset,
+      0 30px 50px rgba(30,18,10,0.35),
+      0 8px 0 #1c130d;
+  }
+
+  .screen{
+    background: linear-gradient(175deg, #D4DAC5, var(--screen));
+    border-radius: 20px;
+    padding: 22px 26px;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.4);
+    margin-bottom: 22px;
+  }
+  .screen .tag{
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--screen-ink);
+    opacity: 0.65;
+    margin-bottom: 4px;
+  }
+  .screen h1{
+    font-size: 30px;
+    color: var(--screen-ink);
+    font-weight: bold;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .screen p{
+    font-size: 12.5px;
+    color: var(--screen-ink);
+    opacity: 0.75;
+    margin-top: 4px;
+  }
+
+  .pad{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 46px 14px;
+  }
+
+  .key{
+    --face: var(--cream);
+    --edge: var(--cream-edge);
+    --ink: var(--cream-ink);
+    position: relative;
+    display: block;
+    text-decoration: none;
+    background: var(--face);
+    color: var(--ink);
+    border-radius: 22px;
+    padding: 20px 18px;
+    box-shadow:
+      0 5px 0 var(--edge),
+      0 10px 18px rgba(0,0,0,0.35);
+    transform: translateY(0);
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+    cursor: pointer;
+  }
+  .key::before{
+    content:"";
+    position: absolute;
+    top: 9%; left: 9%;
+    width: 46%; height: 32%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0));
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .key:hover{
+    transform: translateY(-3px);
+    box-shadow:
+      0 8px 0 var(--edge),
+      0 16px 22px rgba(0,0,0,0.4);
+  }
+  .key:active{
+    transform: translateY(4px);
+    box-shadow:
+      0 1px 0 var(--edge),
+      0 3px 6px rgba(0,0,0,0.3);
+  }
+
+  .key .icon{
+    position: relative;
+    font-size: 22px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .key .name{
+    position: relative;
+    font-size: 16.5px;
+    font-weight: bold;
+    line-height: 1.3;
+  }
+
+  .key.mocha{ --face: var(--mocha); --edge: var(--mocha-edge); --ink: var(--mocha-ink); }
+  .key.rust{ --face: var(--rust); --edge: var(--rust-edge); --ink: var(--rust-ink); }
+
+  /* ---- pixel speech-bubble tooltip ---- */
+  .bubble{
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 18px);
+    transform: translate(-50%, 6px);
+    width: 240px;
+    max-width: 76vw;
+    padding: 14px 16px;
+    background: var(--bubble-bg);
+    color: var(--bubble-ink);
+    font-size: 12.5px;
+    line-height: 1.5;
+    border: 4px solid #2A2013;
+    clip-path: polygon(
+      0px 12px, 6px 12px, 6px 6px, 12px 6px, 12px 0px,
+      calc(100% - 12px) 0px, calc(100% - 12px) 6px, calc(100% - 6px) 6px, calc(100% - 6px) 12px, 100% 12px,
+      100% calc(100% - 12px), calc(100% - 6px) calc(100% - 12px), calc(100% - 6px) calc(100% - 6px), calc(100% - 12px) calc(100% - 6px), calc(100% - 12px) 100%,
+      12px 100%, 12px calc(100% - 6px), 6px calc(100% - 6px), 6px calc(100% - 12px), 0px calc(100% - 12px)
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease-out, transform 0.12s ease-out;
+    z-index: 5;
+  }
+  .bubble::before{
+    content:"";
+    position: absolute;
+    inset: 0;
+    background: var(--bubble-shadow);
+    clip-path: inherit;
+    transform: translate(6px, 6px);
+    z-index: -2;
+  }
+  .bubble::after{
+    content:"";
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 14px; height: 14px;
+    background: var(--bubble-bg);
+    border-left: 4px solid #2A2013;
+    border-top: 4px solid #2A2013;
+  }
+
+  .key:hover .bubble,
+  .key:focus .bubble{
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  footer{
+    text-align: center;
+    margin-top: 22px;
+  }
+  footer span{
+    display: inline-block;
+    font-size: 11px;
+    color: #C9BFA6;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 480px){
+    .calc{ padding: 18px 16px 26px; border-radius: 30px; }
+    .screen h1{ font-size: 24px; }
+    .bubble{ width: 200px; }
+  }
+</style>
+</head>
+<body>
+<div class="calc">
+
+  <div class="screen">
+    <div class="tag">GT · M · 05</div>
+    <h1>Хелперы</h1>
+    <p>Рабочие инструменты для локализации — наведи на кнопку, чтобы узнать что внутри</p>
+  </div>
+
+  <div class="pad">
+    <a class="key" href="pomogator-3000.html">
+      <span class="icon">📄</span>
+      <span class="name">Проверка таблиц локализации</span>
+      <span class="bubble">Ищет непереведённые строки, сверяет два файла между собой — что пропущено, где расходятся переводы. .xlsx, .xls и Weblate.</span>
+    </a>
+
+    <a class="key mocha" href="email-subject-generator.html">
+      <span class="icon">✉️</span>
+      <span class="name">Генератор тем писем</span>
+      <span class="bubble">Собирает тему письма подрядчику по кнопкам: ID заказа, подрядчик, срочность, языки, продукт.</span>
+    </a>
+
+    <a class="key" href="story-points-calculator.html">
+      <span class="icon">⏱️</span>
+      <span class="name">Калькулятор Story Points</span>
+      <span class="bubble">Переводит оценку задачи в часах и минутах в стори-поинты по правилу 1 SP = 15 минут.</span>
+    </a>
+
+    <a class="key mocha" href="excel-column-processor.html">
+      <span class="icon">📊</span>
+      <span class="name">Обработчик колонок Excel</span>
+      <span class="bubble">Массово чистит .xlsx-файлы: переносит нужную колонку или оставляет только первые две — сразу для пачки файлов.</span>
+    </a>
+
+    <a class="key rust" href="world-clock.html">
+      <span class="icon">🕒</span>
+      <span class="name">Часы городов</span>
+      <span class="bubble">Текущее время в Москве, Алматы, Ереване, Оше, Ташкенте, Тбилиси и у команды в Китае.</span>
+    </a>
+  </div>
+
+  <footer><span>5 инструментов</span></footer>
+
+</div>
+</body>
+</html>
