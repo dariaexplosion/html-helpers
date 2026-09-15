@@ -6,10 +6,17 @@
     <title>Обработчик колонок Excel</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        :root{
+            --page:#EFE7D6; --ink:#2A1E0E; --ink-soft:#6b5c44;
+            --cream:#EDE2C4; --cream-edge:#B9A97D;
+            --rust:#C9642F; --rust-edge:#8F3E17; --rust-ink:#FBEEE0;
+            --moss:#7C9A56; --moss-edge:#516A34;
+            --panel:#FAF3E1; --panel-edge:#DCCDA0;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Trebuchet MS', Verdana, sans-serif;
+            background: var(--page);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -17,15 +24,16 @@
             padding: 20px;
         }
         .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            background: var(--panel);
+            border: 1px solid var(--panel-edge);
+            border-radius: 24px;
+            box-shadow: 0 6px 0 var(--panel-edge), 0 20px 44px rgba(60,40,10,0.18);
             padding: 40px;
             max-width: 600px;
             width: 100%;
         }
-        h1 { font-size: 28px; font-weight: 700; color: #2d3748; margin-bottom: 12px; text-align: center; }
-        .subtitle { text-align: center; color: #718096; font-size: 14px; margin-bottom: 32px; }
+        h1 { font-size: 28px; font-weight: bold; color: var(--ink); margin-bottom: 12px; text-align: center; }
+        .subtitle { text-align: center; color: var(--ink-soft); font-size: 14px; margin-bottom: 32px; }
 
         .mode-selector {
             display: flex;
@@ -35,100 +43,107 @@
         .mode-btn {
             flex: 1;
             padding: 14px 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: #f7fafc;
+            border: 2px solid var(--cream-edge);
+            border-radius: 14px;
+            background: var(--cream);
             cursor: pointer;
             text-align: center;
-            transition: all 0.2s;
+            box-shadow: 0 4px 0 var(--cream-edge);
+            transform: translateY(0);
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, background 0.15s;
         }
-        .mode-btn:hover { border-color: #667eea; background: #edf2f7; }
+        .mode-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--cream-edge); }
         .mode-btn.active {
-            border-color: #667eea;
-            background: #eef0fd;
+            background: var(--rust);
+            border-color: var(--rust-edge);
+            box-shadow: 0 4px 0 var(--rust-edge);
         }
         .mode-btn .mode-title {
             font-size: 14px;
-            font-weight: 600;
-            color: #2d3748;
+            font-weight: 700;
+            color: var(--ink);
             margin-bottom: 4px;
         }
         .mode-btn .mode-desc {
             font-size: 12px;
-            color: #718096;
+            color: var(--ink-soft);
             line-height: 1.4;
         }
-        .mode-btn.active .mode-title { color: #667eea; }
+        .mode-btn.active .mode-title { color: var(--rust-ink); }
+        .mode-btn.active .mode-desc { color: #F0DDC9; }
 
         .upload-area {
-            border: 3px dashed #cbd5e0;
-            border-radius: 12px;
+            border: 3px dashed var(--cream-edge);
+            border-radius: 16px;
             padding: 40px;
             text-align: center;
-            transition: all 0.3s;
+            transition: all 0.2s;
             cursor: pointer;
-            background: #f7fafc;
+            background: var(--cream);
         }
-        .upload-area:hover { border-color: #667eea; background: #edf2f7; }
-        .upload-area.dragover { border-color: #667eea; background: #e6fffa; }
-        .upload-icon { font-size: 48px; margin-bottom: 16px; color: #667eea; }
-        .upload-text { font-size: 16px; color: #2d3748; margin-bottom: 8px; font-weight: 600; }
-        .upload-hint { font-size: 13px; color: #a0aec0; }
+        .upload-area:hover { border-color: var(--rust-edge); background: #F3D9C6; }
+        .upload-area.dragover { border-color: var(--moss-edge); background: #E4EBD6; }
+        .upload-icon { font-size: 48px; margin-bottom: 16px; color: var(--rust-edge); }
+        .upload-text { font-size: 16px; color: var(--ink); margin-bottom: 8px; font-weight: 700; }
+        .upload-hint { font-size: 13px; color: var(--ink-soft); }
         #fileInput { display: none; }
 
         .file-list { margin-top: 24px; display: none; }
         .file-item {
-            background: #f7fafc;
+            background: var(--cream);
             padding: 12px 16px;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-bottom: 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             animation: fadeIn 0.3s ease-out;
         }
-        .file-name { font-size: 14px; color: #2d3748; font-weight: 500; }
-        .file-status { font-size: 12px; color: #718096; }
+        .file-name { font-size: 14px; color: var(--ink); font-weight: 600; }
+        .file-status { font-size: 12px; color: var(--ink-soft); }
 
         .process-btn {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--rust);
+            color: var(--rust-ink);
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
+            font-family: inherit;
             cursor: pointer;
             margin-top: 24px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 0 var(--rust-edge);
+            transform: translateY(0);
+            transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
             display: none;
         }
-        .process-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102,126,234,0.4); }
-        .process-btn:active { transform: translateY(0); }
+        .process-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--rust-edge); }
+        .process-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rust-edge); }
         .process-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .info-box {
-            background: #edf2f7;
-            border-left: 4px solid #667eea;
+            background: var(--cream);
+            border-left: 4px solid var(--rust);
             padding: 16px;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-top: 24px;
             font-size: 13px;
-            color: #4a5568;
+            color: var(--ink-soft);
             line-height: 1.6;
         }
-        .info-box strong { color: #2d3748; }
+        .info-box strong { color: var(--ink); }
 
         .success-message {
-            background: #c6f6d5;
-            color: #22543d;
+            background: #DCE7C9;
+            color: var(--moss-edge);
             padding: 12px 16px;
-            border-radius: 8px;
+            border-radius: 10px;
             margin-top: 16px;
             display: none;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -224,10 +239,10 @@
         for (let i = 0; i < selectedFiles.length; i++) {
             const statusSpan = fileList.children[i].querySelector('.file-status');
             statusSpan.textContent = 'Обрабатывается...';
-            statusSpan.style.color = '#667eea';
+            statusSpan.style.color = '#8F3E17';
             await processFile(selectedFiles[i]);
             statusSpan.textContent = '✓ Готово';
-            statusSpan.style.color = '#48bb78';
+            statusSpan.style.color = '#516A34';
         }
         processBtn.textContent = 'Обработать файлы';
         processBtn.disabled = false;

@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Генератор тем писем</title>
     <style>
+        :root{
+            --page:#EFE7D6; --ink:#2A1E0E; --ink-soft:#6b5c44;
+            --cream:#EDE2C4; --cream-edge:#B9A97D;
+            --rust:#C9642F; --rust-edge:#8F3E17; --rust-ink:#FBEEE0;
+            --moss:#7C9A56; --moss-edge:#516A34;
+            --panel:#FAF3E1; --panel-edge:#DCCDA0;
+        }
         * {
             box-sizing: border-box;
             margin: 0;
@@ -12,8 +19,8 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Trebuchet MS', Verdana, sans-serif;
+            background: var(--page);
             min-height: 100vh;
             padding: 20px;
         }
@@ -21,20 +28,22 @@
         .container {
             max-width: 900px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            background: var(--panel);
+            border: 1px solid var(--panel-edge);
+            border-radius: 20px;
+            box-shadow: 0 6px 0 var(--panel-edge), 0 16px 30px rgba(60,40,10,0.15);
             padding: 30px;
         }
         
         h1 {
-            color: #333;
+            color: var(--ink);
             margin-bottom: 10px;
-            font-size: 24px;
+            font-size: 25px;
+            font-weight: bold;
         }
         
         .subtitle {
-            color: #666;
+            color: var(--ink-soft);
             margin-bottom: 30px;
             font-size: 14px;
         }
@@ -45,8 +54,8 @@
         
         .section-title {
             font-size: 16px;
-            font-weight: 600;
-            color: #444;
+            font-weight: 700;
+            color: var(--ink);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
@@ -57,7 +66,7 @@
             content: '';
             width: 4px;
             height: 20px;
-            background: #667eea;
+            background: var(--rust);
             border-radius: 2px;
         }
         
@@ -68,39 +77,52 @@
         }
         
         .btn {
-            padding: 8px 16px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 6px;
+            padding: 9px 16px;
+            border: 2px solid var(--cream-edge);
+            background: var(--cream);
+            border-radius: 10px;
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.2s;
-            color: #333;
+            font-family: inherit;
+            transition: all 0.12s ease-out;
+            color: var(--ink);
+            box-shadow: 0 3px 0 var(--cream-edge);
+            transform: translateY(0);
         }
         
         .btn:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
+            border-color: var(--rust-edge);
+            background: #F3D9C6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 0 var(--cream-edge);
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 var(--cream-edge);
         }
         
         .btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+            background: var(--rust);
+            color: var(--rust-ink);
+            border-color: var(--rust-edge);
+            box-shadow: 0 3px 0 var(--rust-edge);
         }
         
         .btn.asap {
-            border-color: #ff6b6b;
+            border-color: #9C4E2C;
         }
         
         .btn.asap:hover {
-            border-color: #ff6b6b;
-            background: #fff0f0;
+            border-color: #9C4E2C;
+            background: #F0D2C4;
         }
         
         .btn.asap.active {
-            background: #ff6b6b;
-            border-color: #ff6b6b;
+            background: #9C4E2C;
+            color: #FBEEE0;
+            border-color: #6E3319;
+            box-shadow: 0 3px 0 #6E3319;
         }
         
         .btn-with-tooltip {
@@ -113,10 +135,10 @@
             bottom: 100%;
             left: 50%;
             transform: translateX(-50%);
-            background: #333;
-            color: white;
+            background: var(--ink);
+            color: #F4ECD8;
             padding: 6px 10px;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 12px;
             white-space: nowrap;
             opacity: 0;
@@ -133,23 +155,23 @@
         .result-section {
             margin-top: 30px;
             padding-top: 30px;
-            border-top: 2px solid #f0f0f0;
+            border-top: 2px solid var(--cream-edge);
         }
         
         .result-box {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
+            background: var(--cream);
+            border: 2px solid var(--cream-edge);
+            border-radius: 12px;
             padding: 20px;
             font-family: 'Courier New', monospace;
             font-size: 15px;
             min-height: 60px;
-            color: #333;
+            color: var(--ink);
             word-break: break-word;
         }
         
         .result-box.empty {
-            color: #999;
+            color: var(--ink-soft);
             font-style: italic;
         }
         
@@ -157,46 +179,74 @@
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            align-items: center;
         }
         
         .action-btn {
-            padding: 10px 20px;
+            padding: 11px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 600;
-            transition: all 0.2s;
+            font-weight: 700;
+            font-family: inherit;
+            transform: translateY(0);
+            transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
         }
         
         .copy-btn {
-            background: #667eea;
-            color: white;
+            background: var(--rust);
+            color: var(--rust-ink);
+            box-shadow: 0 4px 0 var(--rust-edge);
         }
         
         .copy-btn:hover {
-            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--rust-edge);
+        }
+        .copy-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--rust-edge);
         }
         
         .clear-btn {
-            background: #e9ecef;
-            color: #333;
+            background: var(--cream);
+            color: var(--ink);
+            box-shadow: 0 4px 0 var(--cream-edge);
         }
         
         .clear-btn:hover {
-            background: #dee2e6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 var(--cream-edge);
+        }
+        .clear-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--cream-edge);
         }
         
         .copied-message {
             display: none;
-            color: #28a745;
+            color: var(--moss-edge);
             font-size: 14px;
+            font-weight: 600;
             align-items: center;
             gap: 5px;
         }
         
         .copied-message.show {
             display: flex;
+        }
+
+        input[type="text"] {
+            border: 2px solid var(--cream-edge) !important;
+            background: var(--cream) !important;
+            color: var(--ink) !important;
+            border-radius: 10px !important;
+            font-family: inherit;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--rust-edge) !important;
         }
     </style>
 </head>

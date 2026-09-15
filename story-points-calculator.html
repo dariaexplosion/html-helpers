@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор Story Points</title>
     <style>
+        :root{
+            --page:#EFE7D6; --ink:#2A1E0E; --ink-soft:#6b5c44;
+            --cream:#EDE2C4; --cream-edge:#B9A97D;
+            --rust:#C9642F; --rust-edge:#8F3E17; --rust-ink:#FBEEE0;
+            --moss:#7C9A56; --moss-edge:#516A34;
+            --panel:#FAF3E1; --panel-edge:#DCCDA0;
+        }
         * {
             margin: 0;
             padding: 0;
@@ -12,8 +19,8 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Trebuchet MS', Verdana, sans-serif;
+            background: var(--page);
             min-height: 100vh;
             padding: 20px;
             display: flex;
@@ -22,22 +29,24 @@
         }
 
         .container {
-            background: white;
-            border-radius: 16px;
+            background: var(--panel);
+            border: 1px solid var(--panel-edge);
+            border-radius: 22px;
             padding: 32px;
             max-width: 600px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 0 var(--panel-edge), 0 20px 40px rgba(60,40,10,0.18);
         }
 
         h1 {
-            color: #333;
+            color: var(--ink);
             margin-bottom: 8px;
             font-size: 28px;
+            font-weight: bold;
         }
 
         .subtitle {
-            color: #666;
+            color: var(--ink-soft);
             margin-bottom: 24px;
             font-size: 14px;
         }
@@ -57,25 +66,28 @@
         label {
             display: block;
             margin-bottom: 6px;
-            color: #555;
+            color: var(--ink);
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         input[type="text"],
         input[type="number"] {
             width: 100%;
             padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            border: 2px solid var(--cream-edge);
+            background: var(--cream);
+            color: var(--ink);
+            border-radius: 10px;
             font-size: 15px;
-            transition: border-color 0.3s;
+            font-family: inherit;
+            transition: border-color 0.2s;
         }
 
         input[type="text"]:focus,
         input[type="number"]:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--rust-edge);
         }
 
         .time-inputs {
@@ -88,26 +100,29 @@
         }
 
         button {
-            background: #667eea;
-            color: white;
+            background: var(--rust);
+            color: var(--rust-ink);
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 13px 24px;
+            border-radius: 14px;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
+            font-family: inherit;
             cursor: pointer;
-            transition: all 0.3s;
+            box-shadow: 0 4px 0 var(--rust-edge);
+            transform: translateY(0);
+            transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
             margin-top: 24px;
         }
 
         button:hover {
-            background: #5568d3;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 0 var(--rust-edge);
         }
 
         button:active {
-            transform: translateY(0);
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--rust-edge);
         }
 
         .tasks-list {
@@ -115,18 +130,18 @@
         }
 
         .task-item {
-            background: #f8f9fa;
+            background: var(--cream);
             padding: 16px;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
         .task-item:hover {
-            background: #f0f1f3;
+            background: #F3E7C6;
         }
 
         .task-info {
@@ -135,49 +150,49 @@
 
         .task-name {
             font-weight: 600;
-            color: #333;
+            color: var(--ink);
             margin-bottom: 4px;
         }
 
         .task-time {
-            color: #666;
+            color: var(--ink-soft);
             font-size: 13px;
         }
 
         .task-sp {
             font-size: 20px;
             font-weight: 700;
-            color: #667eea;
+            color: var(--rust-edge);
             margin-right: 12px;
         }
 
         .delete-btn {
-            background: #ff4757;
-            color: white;
+            background: #B23A2E;
+            color: #FBEEE0;
             border: none;
             width: 32px;
             height: 32px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
+            transition: all 0.2s;
             padding: 0;
             margin: 0;
+            box-shadow: 0 3px 0 #7A2419;
         }
 
         .delete-btn:hover {
-            background: #ee5a6f;
-            transform: scale(1.1);
+            transform: scale(1.06);
         }
 
         .summary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(160deg, var(--body-1, #3B2C22), #2A1F18);
+            color: #F4ECD8;
             padding: 24px;
-            border-radius: 12px;
+            border-radius: 16px;
             margin-top: 24px;
             text-align: center;
         }
@@ -192,12 +207,12 @@
         .summary-row:last-child {
             margin-bottom: 0;
             padding-top: 12px;
-            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid rgba(255, 255, 255, 0.15);
         }
 
         .summary-label {
             font-size: 15px;
-            opacity: 0.9;
+            opacity: 0.85;
         }
 
         .summary-value {
@@ -207,7 +222,7 @@
 
         .empty-state {
             text-align: center;
-            color: #999;
+            color: var(--ink-soft);
             padding: 40px 20px;
             font-size: 15px;
         }
@@ -223,57 +238,68 @@
         }
 
         .quick-btn {
-            background: #f0f1f3;
-            color: #333;
-            border: 2px solid #e0e0e0;
+            background: var(--cream);
+            color: var(--ink);
+            border: 2px solid var(--cream-edge);
             padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: 10px;
             font-size: 14px;
             font-weight: 600;
+            font-family: inherit;
             cursor: pointer;
-            transition: all 0.3s;
+            box-shadow: 0 3px 0 var(--cream-edge);
+            transform: translateY(0);
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
             margin: 0;
         }
 
         .quick-btn:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-            transform: translateY(0);
-            box-shadow: none;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 var(--cream-edge);
+        }
+        .quick-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 var(--cream-edge);
         }
 
         .quick-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+            background: var(--rust);
+            color: var(--rust-ink);
+            border-color: var(--rust-edge);
+            box-shadow: 0 3px 0 var(--rust-edge);
         }
 
         .reset-btn {
-            background: #ff6b6b;
-            color: white;
+            background: #9C4E2C;
+            color: #FBEEE0;
             border: none;
             padding: 10px 16px;
-            border-radius: 6px;
+            border-radius: 10px;
             font-size: 14px;
             font-weight: 600;
+            font-family: inherit;
             cursor: pointer;
-            transition: all 0.3s;
+            box-shadow: 0 3px 0 #6E3319;
+            transform: translateY(0);
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
             margin: 0;
             white-space: nowrap;
         }
 
         .reset-btn:hover {
-            background: #ee5a6f;
-            transform: translateY(0);
-            box-shadow: none;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 #6E3319;
+        }
+        .reset-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #6E3319;
         }
 
         .duration-section {
             margin-top: 20px;
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
+            background: var(--cream);
+            border-radius: 14px;
         }
 
         .duration-section label {
@@ -283,37 +309,39 @@
         select {
             width: 100%;
             padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            border: 2px solid var(--cream-edge);
+            border-radius: 10px;
             font-size: 15px;
-            background: white;
+            font-family: inherit;
+            background: var(--panel);
+            color: var(--ink);
             cursor: pointer;
-            transition: border-color 0.3s;
+            transition: border-color 0.2s;
         }
 
         select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--rust-edge);
         }
 
         .result-box {
             margin-top: 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
+            background: linear-gradient(160deg, #3B2C22, #2A1F18);
+            border-radius: 18px;
             padding: 24px;
-            color: white;
+            color: #F4ECD8;
         }
 
         .result-title {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 16px;
-            opacity: 0.9;
+            opacity: 0.85;
         }
 
         .result-content {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
             padding: 16px;
         }
 
@@ -322,7 +350,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .result-row:last-child {
@@ -332,12 +360,12 @@
         .result-highlight {
             padding-top: 16px;
             margin-top: 8px;
-            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .result-label {
             font-size: 15px;
-            opacity: 0.9;
+            opacity: 0.85;
         }
 
         .result-value {
@@ -347,6 +375,7 @@
 
         .result-highlight .result-value {
             font-size: 28px;
+            color: #F0C879;
         }
     </style>
 </head>
