@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Часы городов</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0b1a2e 0%, #1a2f44 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            padding: 16px;
+            margin: 0;
+        }
+
+        .clock-card {
+            background: rgba(22, 40, 62, 0.85);
+            backdrop-filter: blur(6px);
+            border-radius: 56px;
+            padding: 36px 42px;
+            max-width: 880px;
+            width: 100%;
+            box-shadow: 0 25px 50px -8px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.08);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.2s ease;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 400;
+            letter-spacing: 2px;
+            font-size: 1.8rem;
+            color: #d6e6f5;
+            text-shadow: 0 2px 6px rgba(0, 20, 30, 0.6);
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 18px;
+            word-spacing: 4px;
+        }
+
+        .city-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px 18px;
+            justify-content: center;
+        }
+
+        .city-item {
+            background: rgba(12, 27, 44, 0.7);
+            backdrop-filter: blur(2px);
+            border-radius: 40px;
+            padding: 18px 12px 16px;
+            text-align: center;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 8px 18px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: transform 0.15s ease, box-shadow 0.2s;
+        }
+
+        .city-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 215, 120, 0.15);
+        }
+
+        .city-name {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #c7ddee;
+            letter-spacing: 0.3px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .city-name span {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            font-weight: 300;
+        }
+
+        .city-time {
+            font-size: 2.4rem;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+            color: #f2e9d0;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px 10px;
+            border-radius: 48px;
+            display: inline-block;
+            min-width: 100px;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.4);
+            backdrop-filter: blur(2px);
+            margin-bottom: 6px;
+        }
+
+        .city-date {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: #a0bccf;
+            letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .special-badge {
+            background: #c9a84c;
+            color: #0e1c2b;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0 10px;
+            border-radius: 30px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            background: #e8c86a;
+            box-shadow: 0 0 12px rgba(232, 200, 106, 0.2);
+            margin-left: 6px;
+        }
+
+        .footer-note {
+            text-align: right;
+            font-size: 0.7rem;
+            color: #6f8aa0;
+            margin-top: 24px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            letter-spacing: 0.3px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 520px) {
+            .clock-card {
+                padding: 22px 16px;
+                border-radius: 40px;
+            }
+            .city-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 14px;
+            }
+            .city-time {
+                font-size: 1.9rem;
+                min-width: 80px;
+            }
+            .city-name {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .city-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-card">
+        <h1>🕒 ГЛОБАЛЬНЫЕ ЧАСЫ</h1>
+
+        <div class="city-grid" id="cityClockContainer">
+            <!-- Москва -->
+            <div class="city-item" data-city="Moscow">
+                <div class="city-name">Москва <span>MSK</span></div>
+                <div class="city-time" id="time-Moscow">--:--</div>
+                <div class="city-date" id="date-Moscow">--.--.----</div>
+            </div>
+
+            <!-- Алматы -->
+            <div class="city-item" data-city="Almaty">
+                <div class="city-name">Алматы <span>ALMT</span></div>
+                <div class="city-time" id="time-Almaty">--:--</div>
+                <div class="city-date" id="date-Almaty">--.--.----</div>
+            </div>
+
+            <!-- Ереван -->
+            <div class="city-item" data-city="Yerevan">
+                <div class="city-name">Ереван <span>AMT</span></div>
+                <div class="city-time" id="time-Yerevan">--:--</div>
+                <div class="city-date" id="date-Yerevan">--.--.----</div>
+            </div>
+
+            <!-- Ош -->
+            <div class="city-item" data-city="Osh">
+                <div class="city-name">Ош <span>KGT</span></div>
+                <div class="city-time" id="time-Osh">--:--</div>
+                <div class="city-date" id="date-Osh">--.--.----</div>
+            </div>
+
+            <!-- Ташкент -->
+            <div class="city-item" data-city="Tashkent">
+                <div class="city-name">Ташкент <span>UZT</span></div>
+                <div class="city-time" id="time-Tashkent">--:--</div>
+                <div class="city-date" id="date-Tashkent">--.--.----</div>
+            </div>
+
+            <!-- Тбилиси -->
+            <div class="city-item" data-city="Tbilisi">
+                <div class="city-name">Тбилиси <span>GET</span></div>
+                <div class="city-time" id="time-Tbilisi">--:--</div>
+                <div class="city-date" id="date-Tbilisi">--.--.----</div>
+            </div>
+
+            <!-- Команда Китая (+5ч к Москве) -->
+            <div class="city-item" data-city="ChinaTeam" style="border-color: rgba(232, 200, 106, 0.25);">
+                <div class="city-name">
+                    Команда Китая 
+                    <span class="special-badge">+5ч</span>
+                </div>
+                <div class="city-time" id="time-ChinaTeam">--:--</div>
+                <div class="city-date" id="date-ChinaTeam">--.--.----</div>
+            </div>
+        </div>
+        <div class="footer-note">⏱️ 24-часовой формат • дата ДД.ММ.ГГГГ</div>
+    </div>
+
+    <script>
+        (function() {
+            // ------ Определение смещений (UTC) ------
+            // Москва: UTC+3 (MSK)
+            // Алматы: UTC+5 (ALMT)
+            // Ереван: UTC+4 (AMT)
+            // Ош: UTC+6 (KGT)
+            // Ташкент: UTC+5 (UZT)
+            // Тбилиси: UTC+4 (GET)
+            // Команда Китая: UTC+8 (по условию +5ч к Москве, 3+5=8)
+            const CITY_OFFSETS = {
+                Moscow: 3,
+                Almaty: 5,
+                Yerevan: 4,
+                Osh: 6,
+                Tashkent: 5,
+                Tbilisi: 4,
+                ChinaTeam: 8    // +5 к Москве (Москва UTC+3)
+            };
+
+            // Элементы DOM для времени и даты
+            const timeElements = {};
+            const dateElements = {};
+
+            // Инициализация ссылок на элементы
+            for (const city of Object.keys(CITY_OFFSETS)) {
+                timeElements[city] = document.getElementById(`time-${city}`);
+                dateElements[city] = document.getElementById(`date-${city}`);
+            }
+
+            // Функция форматирования времени: HH:MM (24-часовой)
+            function formatTime(hours, minutes) {
+                const hh = String(hours).padStart(2, '0');
+                const mm = String(minutes).padStart(2, '0');
+                return `${hh}:${mm}`;
+            }
+
+            // Форматирование даты: dd.mm.yyyy
+            function formatDate(day, month, year) {
+                const dd = String(day).padStart(2, '0');
+                const mm = String(month + 1).padStart(2, '0'); // month 0-11
+                const yyyy = year;
+                return `${dd}.${mm}.${yyyy}`;
+            }
+
+            // Обновление часов для всех городов
+            function updateClocks() {
+                // Текущее время в UTC (миллисекунды)
+                const now = new Date();
+                const utcHours = now.getUTCHours();
+                const utcMinutes = now.getUTCMinutes();
+                const utcDay = now.getUTCDate();
+                const utcMonth = now.getUTCMonth();    // 0-11
+                const utcYear = now.getUTCFullYear();
+
+                // Для каждого города вычисляем локальное время и дату
+                for (const [city, offset] of Object.entries(CITY_OFFSETS)) {
+                    // Смещение в часах относительно UTC
+                    let localHours = (utcHours + offset) % 24;
+                    // Корректировка при переходе через 0 (но дата может поменяться!)
+                    let localDay = utcDay;
+                    let localMonth = utcMonth;
+                    let localYear = utcYear;
+
+                    // Если при прибавлении смещения перешли через сутки (вперёд или назад)
+                    // Простая проверка: если (utcHours + offset) >= 24 → день вперёд
+                    // если (utcHours + offset) < 0 → день назад (но offset всегда положительный, поэтому только вперёд)
+                    // Так как offset целые от 3 до 8, то день может измениться только вперёд.
+                    // Но также может быть ситуация, если utcHours + offset >= 24, то день +1
+                    // и если utcHours + offset < 0 (не наш случай, т.к. offset > 0)
+                    // Учтем переход через сутки вперёд:
+                    const totalHours = utcHours + offset;
+                    if (totalHours >= 24) {
+                        // Переход на следующий день
+                        const nextDay = new Date(Date.UTC(utcYear, utcMonth, utcDay + 1, 0, 0, 0));
+                        localDay = nextDay.getUTCDate();
+                        localMonth = nextDay.getUTCMonth();
+                        localYear = nextDay.getUTCFullYear();
+                        // часы уже скорректированы через % 24
+                    } else if (totalHours < 0) {
+                        // (не произойдёт, но оставим для безопасности)
+                        const prevDay = new Date(Date.UTC(utcYear, utcMonth, utcDay - 1, 0, 0, 0));
+                        localDay = prevDay.getUTCDate();
+                        localMonth = prevDay.getUTCMonth();
+                        localYear = prevDay.getUTCFullYear();
+                    }
+
+                    // Итоговые часы (0-23) после коррекции
+                    const finalHours = ((utcHours + offset) % 24 + 24) % 24; // всегда положительные
+
+                    // Обновляем DOM
+                    if (timeElements[city]) {
+                        timeElements[city].textContent = formatTime(finalHours, utcMinutes);
+                    }
+                    if (dateElements[city]) {
+                        dateElements[city].textContent = formatDate(localDay, localMonth, localYear);
+                    }
+                }
+            }
+
+            // Первое обновление
+            updateClocks();
+
+            // Обновление каждую секунду (1000 мс)
+            setInterval(updateClocks, 1000);
+
+            // Дополнительная синхронизация при потере фокуса / возврате (для точности)
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    updateClocks();
+                }
+            });
+
+            // Для отладки: если элемент не найден, выведем предупреждение
+            for (const city of Object.keys(CITY_OFFSETS)) {
+                if (!timeElements[city] || !dateElements[city]) {
+                    console.warn(`Элементы для города ${city} не найдены. Проверьте ID.`);
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

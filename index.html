@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Помогалки</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 48px 20px;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1 {
+    color: #fff;
+    text-align: center;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .sub {
+    text-align: center;
+    color: rgba(255,255,255,0.85);
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  a.card {
+    display: block;
+    background: #fff;
+    border-radius: 16px;
+    padding: 22px 24px;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  a.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(0,0,0,0.22);
+  }
+  .icon { font-size: 26px; margin-bottom: 10px; display: block; }
+  .title { font-size: 17px; font-weight: 700; color: #2d3748; margin-bottom: 6px; }
+  .desc { font-size: 13px; color: #718096; line-height: 1.5; }
+  footer {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧰 Помогалки</h1>
+  <p class="sub">Набор рабочих инструментов для локализации</p>
+
+  <div class="grid">
+    <a class="card" href="pomogator-3000.html">
+      <span class="icon">🛠️</span>
+      <div class="title">Помогатор 3000</div>
+      <div class="desc">Основной универсальный инструмент</div>
+    </a>
+
+    <a class="card" href="email-subject-generator.html">
+      <span class="icon">✉️</span>
+      <div class="title">Генератор тем писем</div>
+      <div class="desc">Обновлено 26.05.2026</div>
+    </a>
+
+    <a class="card" href="story-points-calculator.html">
+      <span class="icon">📐</span>
+      <div class="title">Калькулятор сторипоинтов</div>
+      <div class="desc">Оценка задач в стори-поинтах</div>
+    </a>
+
+    <a class="card" href="excel-column-processor.html">
+      <span class="icon">📊</span>
+      <div class="title">Обработчик колонок Excel</div>
+      <div class="desc">Перенос и удаление колонок в .xlsx / .xls файлах</div>
+    </a>
+
+    <a class="card" href="holiday-calendar-2026.html">
+      <span class="icon">🗓️</span>
+      <div class="title">Рабочий календарь 2026</div>
+      <div class="desc">Сопоставление праздников РФ, Грузии, Армении, Казахстана, Кыргызстана и Таджикистана</div>
+    </a>
+
+    <a class="card" href="world-clock.html">
+      <span class="icon">🕒</span>
+      <div class="title">Часы городов</div>
+      <div class="desc">Текущее время в Москве, Алматы, Ереване, Оше, Ташкенте, Тбилиси и у команды Китая</div>
+    </a>
+  </div>
+
+  <footer>обновляется по мере надобности</footer>
+</div>
+</body>
+</html>
