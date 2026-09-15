@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Tab 👹</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --accent-lime: #c8ff00;
+            --accent-purple: #a855f7;
+            --accent-pink: #ff6b9d;
+            --text-main: #e4e4e7;
+            --text-muted: #71717a;
+            --border: #27272a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(200, 255, 0, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200, 255, 0, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .oni-icon {
+            font-size: 80px;
+            animation: floatOni 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.6));
+        }
+
+        @keyframes floatOni {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-12px) rotate(5deg); }
+        }
+
+        h1 {
+            font-family: 'Unbounded', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-lime) 0%, var(--accent-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+        }
+
+        /* Locale selector */
+        .locale-selector {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .locale-selector h3 {
+            font-family: 'Unbounded', sans-serif;
+            font-size: 14px;
+            color: var(--accent-lime);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .locale-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .locale-btn {
+            padding: 10px 16px;
+            background: transparent;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .locale-btn:hover {
+            border-color: var(--accent-purple);
+            color: var(--accent-purple);
+        }
+
+        .locale-btn.active {
+            background: linear-gradient(135deg, var(--accent-lime) 0%, #9ef01a 100%);
+            border-color: var(--accent-lime);
+            color: #000;
+        }
+
+        .locale-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .locale-action-btn {
+            padding: 8px 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .locale-action-btn:hover {
+            border-color: var(--accent-pink);
+            color: var(--accent-pink);
+        }
+
+        /* Drop zone */
+        .drop-zone {
+            background: var(--bg-card);
+            border: 2px dashed var(--border);
+            border-radius: 24px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(200, 255, 0, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--accent-lime);
+            transform: scale(1.01);
+        }
+
+        .drop-zone:hover::before,
+        .drop-zone.dragover::before {
+            opacity: 1;
+        }
+
+        .drop-zone.dragover {
+            box-shadow: 0 0 40px rgba(200, 255, 0, 0.3);
+        }
+
+        .drop-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .drop-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .drop-hint {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .drop-hint span {
+            color: var(--accent-lime);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Processing state */
+        .processing {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .processing.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-lime);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results */
+        .results {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .results.active {
+            display: block;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .result-icon {
+            font-size: 40px;
+        }
+
+        .result-title {
+            font-family: 'Unbounded', sans-serif;
+            font-size: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            background: rgba(200, 255, 0, 0.05);
+            border: 1px solid rgba(200, 255, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Unbounded', sans-serif;
+            font-size: 28px;
+            color: var(--accent-lime);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 18px 30px;
+            background: linear-gradient(135deg, var(--accent-lime) 0%, #9ef01a 100%);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-family: 'Unbounded', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(200, 255, 0, 0.4);
+        }
+
+        .reset-btn {
+            display: block;
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            border-color: var(--accent-pink);
+            color: var(--accent-pink);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <span class="oni-icon">👹</span>
+            </div>
+            <h1>Monster Tab</h1>
+        </header>
+
+        <!-- Locale selector -->
+        <div class="locale-selector">
+            <h3>🌍 Выбери языки для таблицы</h3>
+            <div class="locale-buttons" id="localeButtons"></div>
+            <div class="locale-actions">
+                <button class="locale-action-btn" id="selectAll">Выбрать все</button>
+                <button class="locale-action-btn" id="deselectAll">Снять все</button>
+                <button class="locale-action-btn" id="presetCIS">🇷🇺 СНГ + Кавказ</button>
+                <button class="locale-action-btn" id="presetEU">🇪🇺 Европа</button>
+            </div>
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+            <span class="drop-icon">📁</span>
+            <p class="drop-text">Перетащи CSV или XLSX сюда</p>
+            <p class="drop-hint">или <span>кликни для выбора</span></p>
+            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+        </div>
+
+        <div class="processing" id="processing">
+            <div class="spinner"></div>
+            <p>Монстр обрабатывает файл...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="result-card">
+                <div class="result-header">
+                    <span class="result-icon">✅</span>
+                    <span class="result-title">Готово!</span>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="statIds">0</div>
+                        <div class="stat-label">ID</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="statMissing">0</div>
+                        <div class="stat-label">Пропущено</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="statLocales">0</div>
+                        <div class="stat-label">Языков</div>
+                    </div>
+                </div>
+
+                <button class="download-btn" id="downloadBtn">
+                    <span>⬇️</span>
+                    Скачать XLSX
+                </button>
+
+                <button class="reset-btn" id="resetBtn">
+                    Обработать другой файл
+                </button>
+            </div>
+        </div>
+
+        <footer class="footer">
+            Made with 👹 by Daria × Claude
+        </footer>
+    </div>
+
+    <script>
+        // Все доступные локали
+        const ALL_LOCALES = [
+            "RU", "EN", "DE", "ES", "FR", "IT", "PL", "SK", "UK",
+            "HY", "KA", "KK", "KY", "TG", "TR", "UZ", "ZH", "AZ", "IN", "AR", "AM"
+        ];
+
+        // Пресеты
+        const PRESETS = {
+            cis: ["RU", "EN", "HY", "KA", "KK", "KY", "TG", "TR", "UZ", "ZH", "AZ", "IN"],
+            eu: ["DE", "EN", "ES", "FR", "IT", "PL", "SK", "UK", "RU", "TR"]
+        };
+
+        // Маппинг локалей из файла
+        const LOCALE_MAPPING = {
+            "ru": "RU", "en": "EN", "de": "DE", "es": "ES", "fr": "FR",
+            "it": "IT", "pl": "PL", "sk": "SK", "uk": "UK",
+            "hy": "HY", "ka": "KA", "ge": "KA", // ge тоже грузинский!
+            "kk": "KK", "ky": "KY", "tg": "TG", "tr": "TR",
+            "uz": "UZ", "zh": "ZH", "az": "AZ", "in": "IN",
+            "ar": "AR", "am": "AM"
+        };
+
+        let selectedLocales = new Set(PRESETS.cis);
+        let processedWorkbook = null;
+        let outputFileName = "output_translations.xlsx";
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const processing = document.getElementById('processing');
+        const results = document.getElementById('results');
+        const localeButtonsContainer = document.getElementById('localeButtons');
+
+        // Создаём кнопки языков
+        function renderLocaleButtons() {
+            localeButtonsContainer.innerHTML = '';
+            ALL_LOCALES.forEach(locale => {
+                const btn = document.createElement('button');
+                btn.className = 'locale-btn' + (selectedLocales.has(locale) ? ' active' : '');
+                btn.textContent = locale;
+                btn.addEventListener('click', () => toggleLocale(locale));
+                localeButtonsContainer.appendChild(btn);
+            });
+        }
+
+        function toggleLocale(locale) {
+            if (selectedLocales.has(locale)) {
+                selectedLocales.delete(locale);
+            } else {
+                selectedLocales.add(locale);
+            }
+            renderLocaleButtons();
+        }
+
+        document.getElementById('selectAll').addEventListener('click', () => {
+            selectedLocales = new Set(ALL_LOCALES);
+            renderLocaleButtons();
+        });
+
+        document.getElementById('deselectAll').addEventListener('click', () => {
+            selectedLocales.clear();
+            renderLocaleButtons();
+        });
+
+        document.getElementById('presetCIS').addEventListener('click', () => {
+            selectedLocales = new Set(PRESETS.cis);
+            renderLocaleButtons();
+        });
+
+        document.getElementById('presetEU').addEventListener('click', () => {
+            selectedLocales = new Set(PRESETS.eu);
+            renderLocaleButtons();
+        });
+
+        renderLocaleButtons();
+
+        // Drag & Drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        async function processFile(file) {
+            if (selectedLocales.size === 0) {
+                alert('Выбери хотя бы один язык!');
+                return;
+            }
+
+            outputFileName = file.name.replace(/\.(csv|xlsx?)$/i, '') + '_transformed.xlsx';
+            
+            dropZone.style.display = 'none';
+            processing.classList.add('active');
+
+            try {
+                const isCSV = file.name.toLowerCase().endsWith('.csv');
+                
+                if (isCSV) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    let text;
+                    
+                    const utf8Decoder = new TextDecoder('utf-8');
+                    text = utf8Decoder.decode(arrayBuffer);
+                    
+                    if (text.includes('Ð') || text.includes('Ã') || text.includes('Ñ')) {
+                        const win1251Decoder = new TextDecoder('windows-1251');
+                        text = win1251Decoder.decode(arrayBuffer);
+                    }
+                    
+                    const workbook = XLSX.read(text, { type: 'string' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    transformData(jsonData);
+                } else {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data, { type: 'array', codepage: 65001 });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    transformData(jsonData);
+                }
+            } catch (error) {
+                alert('Ошибка при чтении файла: ' + error.message);
+                resetUI();
+            }
+        }
+
+        function transformData(data) {
+            const activeLocales = Array.from(selectedLocales);
+            
+            // Нормализуем данные
+            const normalized = data.map(row => {
+                const id = row.id || row.ID || row.Id;
+                const locale = (row.locale || row.LOCALE || row.Locale || '').toString().toLowerCase().trim();
+                const value = row.value || row.VALUE || row.Value || '';
+                return { id, locale: LOCALE_MAPPING[locale], value };
+            }).filter(row => row.id !== undefined && row.locale);
+
+            // Группируем по id
+            const grouped = {};
+            normalized.forEach(row => {
+                if (!grouped[row.id]) {
+                    grouped[row.id] = {};
+                }
+                grouped[row.id][row.locale] = row.value;
+            });
+
+            // Создаём данные для главного листа
+            const mainData = [];
+            const missingData = [];
+            let totalMissing = 0;
+
+            Object.keys(grouped).sort((a, b) => {
+                const numA = parseInt(a);
+                const numB = parseInt(b);
+                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                return String(a).localeCompare(String(b));
+            }).forEach(id => {
+                const row = { id };
+                const missing = [];
+                
+                activeLocales.forEach(locale => {
+                    const val = grouped[id][locale] || '';
+                    row[locale] = val;
+                    if (!val || val.toString().trim() === '') {
+                        missing.push(locale);
+                    }
+                });
+                
+                mainData.push(row);
+                
+                if (missing.length > 0) {
+                    missingData.push({
+                        id: id,
+                        missing_locales: missing.join(', '),
+                        count: missing.length
+                    });
+                    totalMissing += missing.length;
+                }
+            });
+
+            // Создаём workbook
+            processedWorkbook = XLSX.utils.book_new();
+
+            // Лист 1: Translations
+            const ws1 = XLSX.utils.json_to_sheet(mainData, { header: ['id', ...activeLocales] });
+            
+            const headerStyle = {
+                fill: { fgColor: { rgb: "4472C4" } },
+                font: { bold: true, color: { rgb: "FFFFFF" } },
+                alignment: { horizontal: "center" }
+            };
+            
+            const yellowFill = {
+                fill: { fgColor: { rgb: "FFFF00" } }
+            };
+
+            const range = XLSX.utils.decode_range(ws1['!ref']);
+            
+            for (let C = range.s.c; C <= range.e.c; C++) {
+                const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+                if (ws1[addr]) {
+                    ws1[addr].s = headerStyle;
+                }
+            }
+            
+            for (let R = 1; R <= range.e.r; R++) {
+                for (let C = 1; C <= range.e.c; C++) {
+                    const addr = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws1[addr] || !ws1[addr].v || ws1[addr].v.toString().trim() === '') {
+                        if (!ws1[addr]) ws1[addr] = { t: 's', v: '' };
+                        ws1[addr].s = yellowFill;
+                    }
+                }
+            }
+
+            ws1['!cols'] = [
+                { wch: 12 },
+                ...activeLocales.map(() => ({ wch: 20 }))
+            ];
+
+            XLSX.utils.book_append_sheet(processedWorkbook, ws1, 'Translations');
+
+            // Лист 2: Missing
+            const ws2 = XLSX.utils.json_to_sheet(missingData.length > 0 ? missingData : [{ message: 'Все переводы на месте! 🎉' }]);
+            ws2['!cols'] = [{ wch: 12 }, { wch: 50 }, { wch: 12 }];
+            XLSX.utils.book_append_sheet(processedWorkbook, ws2, 'Missing');
+
+            // Показываем результаты
+            processing.classList.remove('active');
+            results.classList.add('active');
+
+            document.getElementById('statIds').textContent = mainData.length;
+            document.getElementById('statMissing').textContent = totalMissing;
+            document.getElementById('statLocales').textContent = activeLocales.length;
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (processedWorkbook) {
+                XLSX.writeFile(processedWorkbook, outputFileName);
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', resetUI);
+
+        function resetUI() {
+            dropZone.style.display = 'block';
+            processing.classList.remove('active');
+            results.classList.remove('active');
+            fileInput.value = '';
+            processedWorkbook = null;
+        }
+    </script>
+</body>
+</html>
