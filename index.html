@@ -20,9 +20,10 @@
     --rust: #C9642F;
     --rust-edge: #8F3E17;
     --rust-ink: #FBEEE0;
-    --bubble-bg: #F4ECD8;
+    --bubble-bg: #F5EDD9;
     --bubble-ink: #2A2013;
-    --bubble-shadow: #C77E96;
+    --bubble-shadow: #D8C79A;
+    --bubble-border: #3B2C22;
   }
 
   *{ box-sizing: border-box; margin:0; padding:0; }
@@ -99,6 +100,7 @@
     transform: translateY(0);
     transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
     cursor: pointer;
+    z-index: 1;
   }
   .key::before{
     content:"";
@@ -109,11 +111,13 @@
     border-radius: 50%;
     pointer-events: none;
   }
-  .key:hover{
+  .key:hover,
+  .key:focus{
     transform: translateY(-3px);
     box-shadow:
       0 8px 0 var(--edge),
       0 16px 22px rgba(0,0,0,0.4);
+    z-index: 30;
   }
   .key:active{
     transform: translateY(4px);
@@ -124,9 +128,13 @@
 
   .key .icon{
     position: relative;
-    font-size: 22px;
-    margin-bottom: 10px;
     display: block;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 12px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 -1px 0 rgba(0,0,0,0.18);
   }
   .key .name{
     position: relative;
@@ -151,7 +159,7 @@
     color: var(--bubble-ink);
     font-size: 12.5px;
     line-height: 1.5;
-    border: 4px solid #2A2013;
+    border: 4px solid var(--bubble-border);
     clip-path: polygon(
       0px 12px, 6px 12px, 6px 6px, 12px 6px, 12px 0px,
       calc(100% - 12px) 0px, calc(100% - 12px) 6px, calc(100% - 6px) 6px, calc(100% - 6px) 12px, 100% 12px,
@@ -180,8 +188,8 @@
     transform: translateX(-50%) rotate(45deg);
     width: 14px; height: 14px;
     background: var(--bubble-bg);
-    border-left: 4px solid #2A2013;
-    border-top: 4px solid #2A2013;
+    border-left: 4px solid var(--bubble-border);
+    border-top: 4px solid var(--bubble-border);
   }
 
   .key:hover .bubble,
@@ -220,31 +228,31 @@
 
   <div class="pad">
     <a class="key" href="pomogator-3000.html">
-      <span class="icon">📄</span>
+      <span class="icon">1</span>
       <span class="name">Проверка таблиц локализации</span>
       <span class="bubble">Ищет непереведённые строки, сверяет два файла между собой — что пропущено, где расходятся переводы. .xlsx, .xls и Weblate.</span>
     </a>
 
     <a class="key mocha" href="email-subject-generator.html">
-      <span class="icon">✉️</span>
+      <span class="icon">2</span>
       <span class="name">Генератор тем писем</span>
       <span class="bubble">Собирает тему письма подрядчику по кнопкам: ID заказа, подрядчик, срочность, языки, продукт.</span>
     </a>
 
     <a class="key" href="story-points-calculator.html">
-      <span class="icon">⏱️</span>
+      <span class="icon">3</span>
       <span class="name">Калькулятор Story Points</span>
       <span class="bubble">Переводит оценку задачи в часах и минутах в стори-поинты по правилу 1 SP = 15 минут.</span>
     </a>
 
     <a class="key mocha" href="excel-column-processor.html">
-      <span class="icon">📊</span>
+      <span class="icon">4</span>
       <span class="name">Обработчик колонок Excel</span>
       <span class="bubble">Массово чистит .xlsx-файлы: переносит нужную колонку или оставляет только первые две — сразу для пачки файлов.</span>
     </a>
 
     <a class="key rust" href="world-clock.html">
-      <span class="icon">🕒</span>
+      <span class="icon">5</span>
       <span class="name">Часы городов</span>
       <span class="bubble">Текущее время в Москве, Алматы, Ереване, Оше, Ташкенте, Тбилиси и у команды в Китае.</span>
     </a>
