@@ -137,7 +137,29 @@
 
     .results-panel { display: none; }
     .results-panel.visible { display: block; }
-    .results-panel h3 { margin-bottom: 14px; font-size: 16px; }
+    .results-panel h3 { margin-bottom: 0; font-size: 16px; }
+    .results-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 4px;
+    }
+    .copy-hint {
+        font-size: 12px;
+        color: var(--ink-soft);
+        margin-bottom: 12px;
+    }
+    .btn-copy-all {
+        background: var(--cream);
+        color: var(--ink);
+        box-shadow: 0 3px 0 var(--cream-edge);
+        padding: 8px 16px;
+        font-size: 12.5px;
+    }
+    .btn-copy-all:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--cream-edge); }
+    .btn-copy-all:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--cream-edge); }
 
     .table-container {
         max-height: 440px;
@@ -159,9 +181,34 @@
         top: 0;
     }
     tr:hover td { background: #F6EFD9; }
+    td.copyable { cursor: pointer; transition: background 0.15s; }
+    td.copyable:hover { background: #F0E4BE; }
+    td.copy-flash { background: #DCE7C9 !important; }
     td.fuzzy-yes { color: var(--rust-edge); font-weight: 700; }
     td.mono { font-family: 'Courier New', monospace; font-size: 12px; color: var(--ink-soft); }
     td.wrap { max-width: 320px; white-space: pre-wrap; word-break: break-word; }
+
+    .copy-toast {
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: var(--body-1, #3B2C22);
+        color: #F4ECD8;
+        padding: 10px 20px;
+        border-radius: 14px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+        z-index: 100;
+    }
+    .copy-toast.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 
     .hint {
         font-size: 12.5px;
@@ -210,7 +257,11 @@
     </div>
 
     <div class="panel results-panel" id="resultsPanel">
-        <h3>Содержимое файла (<span id="tableCount">0</span> строк)</h3>
+        <div class="results-header">
+            <h3>Содержимое файла (<span id="tableCount">0</span> строк)</h3>
+            <button class="btn-copy-all" id="copyAllBtn">Скопировать всё</button>
+        </div>
+        <p class="copy-hint">Клик по ячейке — скопировать её текст</p>
         <div class="table-container">
             <table>
                 <thead>
@@ -228,6 +279,8 @@
         </div>
     </div>
 </div>
+
+<div class="copy-toast" id="copyToast">Скопировано</div>
 
 <script>
     let currentEntries = [];
@@ -348,15 +401,76 @@
             const tr = document.createElement('tr');
             const comments = [e.translator, e.developer_comments].filter(Boolean).join(' · ');
             tr.innerHTML =
-                '<td class="wrap">' + escapeHtml(e.source || '') + '</td>' +
-                '<td class="wrap">' + escapeHtml(e.target || '') + '</td>' +
-                '<td>' + escapeHtml(e.context || '') + '</td>' +
+                '<td class="wrap copyable" data-copy="' + escapeAttr(e.source || '') + '">' + escapeHtml(e.source || '') + '</td>' +
+                '<td class="wrap copyable" data-copy="' + escapeAttr(e.target || '') + '">' + escapeHtml(e.target || '') + '</td>' +
+                '<td class="copyable" data-copy="' + escapeAttr(e.context || '') + '">' + escapeHtml(e.context || '') + '</td>' +
                 '<td class="' + (e.fuzzy ? 'fuzzy-yes' : '') + '">' + (e.fuzzy ? 'да' : '') + '</td>' +
-                '<td class="mono">' + escapeHtml(e.location || '') + '</td>' +
-                '<td class="wrap">' + escapeHtml(comments) + '</td>';
+                '<td class="mono copyable" data-copy="' + escapeAttr(e.location || '') + '">' + escapeHtml(e.location || '') + '</td>' +
+                '<td class="wrap copyable" data-copy="' + escapeAttr(comments) + '">' + escapeHtml(comments) + '</td>';
             tableBody.appendChild(tr);
         });
         resultsPanel.classList.add('visible');
+    }
+
+    function escapeAttr(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    tableBody.addEventListener('click', e => {
+        const td = e.target.closest('td.copyable');
+        if (!td) return;
+        const text = td.getAttribute('data-copy') || '';
+        if (!text) return;
+        copyToClipboard(text);
+        td.classList.add('copy-flash');
+        setTimeout(() => td.classList.remove('copy-flash'), 300);
+        showToast('Скопировано');
+    });
+
+    document.getElementById('copyAllBtn').addEventListener('click', () => {
+        const headers = ['source', 'target', 'context', 'fuzzy', 'location', 'comments'];
+        const rows = [headers.join('\t')];
+        currentEntries.forEach(e => {
+            const comments = [e.translator, e.developer_comments].filter(Boolean).join(' · ');
+            rows.push([
+                (e.source || '').replace(/\t/g, ' '),
+                (e.target || '').replace(/\t/g, ' '),
+                (e.context || '').replace(/\t/g, ' '),
+                e.fuzzy ? 'да' : '',
+                (e.location || '').replace(/\t/g, ' '),
+                comments.replace(/\t/g, ' ')
+            ].join('\t'));
+        });
+        copyToClipboard(rows.join('\n'));
+        showToast('Вся таблица скопирована');
+    });
+
+    function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (err) { /* noop */ }
+        document.body.removeChild(ta);
+    }
+
+    let toastTimer = null;
+    function showToast(message) {
+        const toast = document.getElementById('copyToast');
+        toast.textContent = message;
+        toast.classList.add('visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('visible'), 1400);
     }
 
     function escapeHtml(s) {
