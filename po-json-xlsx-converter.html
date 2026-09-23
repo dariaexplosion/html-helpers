@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Конвертер PO / JSON / XLSX</title>
+<title>Конвертер PO / JSON / XLSX / XLIFF</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
     :root{
@@ -86,6 +86,7 @@
     .badge.po { background: #DCE7C9; color: var(--moss-edge); }
     .badge.json { background: #F0DDBE; color: #8F3E17; }
     .badge.xlsx { background: #E3D3C0; color: #6E5138; }
+    .badge.xliff { background: #D9CFEA; color: #4A3B72; }
 
     .export-row {
         display: flex;
@@ -115,6 +116,10 @@
     .btn-xlsx { background: var(--rust); color: var(--rust-ink); box-shadow: 0 4px 0 var(--rust-edge); }
     .btn-xlsx:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--rust-edge); }
     .btn-xlsx:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--rust-edge); }
+
+    .btn-xliff { background: #6E5A99; color: #F1ECF8; box-shadow: 0 4px 0 #493C6B; }
+    .btn-xliff:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 #493C6B; }
+    .btn-xliff:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #493C6B; }
 
     button:disabled { background: #D8CBA9; color: #9C8D67; box-shadow: 0 4px 0 #B9A97D; cursor: not-allowed; }
 
@@ -176,9 +181,9 @@
         <div class="drop-zone" id="dropZone">
             <div class="drop-icon">📁</div>
             <div class="drop-text">Перетащи файл сюда</div>
-            <div class="drop-hint">или нажми, чтобы выбрать — .po, .json, .xlsx, .xls</div>
+            <div class="drop-hint">или нажми, чтобы выбрать — .po, .json, .xlsx, .xls, .xliff, .xlf</div>
         </div>
-        <input type="file" id="fileInput" accept=".po,.json,.xlsx,.xls">
+        <input type="file" id="fileInput" accept=".po,.json,.xlsx,.xls,.xliff,.xlf">
 
         <div class="file-meta" id="fileMeta">
             <span class="badge" id="formatBadge"></span>
@@ -190,6 +195,7 @@
             <button class="btn-po" id="exportPo" disabled>Скачать .po</button>
             <button class="btn-json" id="exportJson" disabled>Скачать .json</button>
             <button class="btn-xlsx" id="exportXlsx" disabled>Скачать .xlsx</button>
+            <button class="btn-xliff" id="exportXliff" disabled>Скачать .xliff</button>
         </div>
         <label class="xlsx-option">
             <input type="checkbox" id="xlsxSourceTargetOnly">
@@ -198,6 +204,7 @@
 
         <p class="hint">
             <strong>Схема полей:</strong> location · source · target · id · fuzzy · context · translator · developer_comments — та же, что в «Проверке таблиц локализации», файлы совместимы между инструментами. Галочка «только source + target» урезает .xlsx до двух столбцов B и C.<br>
+            <strong>Как поля ложатся в XLIFF:</strong> context → атрибут resname, fuzzy → approved="no", location → context-group/sourcefile, developer_comments и translator → отдельные &lt;note&gt; с from="developer"/"translator".<br>
             <strong>Ограничения:</strong> множественные формы (plural) в .po сворачиваются в одну строку (msgstr[0]); устаревшие записи (#~) не читаются; заголовок .po при конвертации из json/xlsx создаётся заново по умолчанию.
         </p>
     </div>
@@ -254,6 +261,9 @@
     document.getElementById('exportJson').addEventListener('click', () => {
         downloadBlob(JSON.stringify(currentEntries, null, 2), baseName + '.json', 'application/json;charset=utf-8');
     });
+    document.getElementById('exportXliff').addEventListener('click', () => {
+        downloadBlob(serializeXliff(currentEntries), baseName + '.xliff', 'application/xml;charset=utf-8');
+    });
     document.getElementById('exportXlsx').addEventListener('click', () => {
         const sourceTargetOnly = document.getElementById('xlsxSourceTargetOnly').checked;
         const suffix = sourceTargetOnly ? '_source-target' : '';
@@ -298,8 +308,20 @@
                 onLoaded(file.name, 'xlsx');
             };
             reader.readAsArrayBuffer(file);
+        } else if (ext === 'xliff' || ext === 'xlf') {
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    currentEntries = parseXliff(e.target.result);
+                    currentHeader = '';
+                    onLoaded(file.name, 'xliff');
+                } catch (err) {
+                    alert('Не получилось прочитать XLIFF: ' + err.message);
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
         } else {
-            alert('Формат не поддерживается. Нужен .po, .json, .xlsx или .xls');
+            alert('Формат не поддерживается. Нужен .po, .json, .xlsx, .xls, .xliff или .xlf');
         }
     }
 
@@ -314,6 +336,7 @@
         document.getElementById('exportPo').disabled = false;
         document.getElementById('exportJson').disabled = false;
         document.getElementById('exportXlsx').disabled = false;
+        document.getElementById('exportXliff').disabled = false;
 
         renderTable();
     }
@@ -634,6 +657,118 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Localization');
         XLSX.writeFile(wb, filename);
+    }
+
+    /* ---------- XLIFF 1.1 parsing / serializing ---------- */
+
+    function parseXliff(text) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'application/xml');
+        if (doc.getElementsByTagName('parsererror').length) {
+            throw new Error('некорректный XML');
+        }
+
+        const entries = [];
+        let autoId = 1;
+        const transUnits = doc.getElementsByTagName('trans-unit');
+
+        for (let i = 0; i < transUnits.length; i++) {
+            const tu = transUnits[i];
+            const id = tu.getAttribute('id') || String(autoId);
+            const resname = tu.getAttribute('resname') || '';
+            const approved = tu.getAttribute('approved');
+            const fuzzy = approved === 'no';
+
+            const sourceEl = tu.getElementsByTagName('source')[0];
+            const targetEl = tu.getElementsByTagName('target')[0];
+            const source = sourceEl ? sourceEl.textContent : '';
+            const target = targetEl ? targetEl.textContent : '';
+
+            let translator = '';
+            let developerComments = '';
+            const notes = tu.getElementsByTagName('note');
+            for (let n = 0; n < notes.length; n++) {
+                const note = notes[n];
+                const from = note.getAttribute('from');
+                const noteText = note.textContent || '';
+                if (from === 'translator') {
+                    translator = translator ? translator + ' | ' + noteText : noteText;
+                } else {
+                    developerComments = developerComments ? developerComments + ' | ' + noteText : noteText;
+                }
+            }
+
+            let location = '';
+            const contextGroups = tu.getElementsByTagName('context-group');
+            for (let cg = 0; cg < contextGroups.length; cg++) {
+                const contexts = contextGroups[cg].getElementsByTagName('context');
+                for (let c = 0; c < contexts.length; c++) {
+                    if (contexts[c].getAttribute('context-type') === 'sourcefile') {
+                        location = contexts[c].textContent || '';
+                    }
+                }
+            }
+
+            entries.push({
+                location: location,
+                source: source,
+                target: target,
+                id: id,
+                fuzzy: fuzzy,
+                context: resname,
+                translator: translator,
+                developer_comments: developerComments
+            });
+            autoId++;
+        }
+
+        return entries;
+    }
+
+    function escapeXml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function serializeXliff(entries) {
+        const lines = [];
+        lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+        lines.push('<xliff version="1.1">');
+        lines.push('  <file source-language="en" target-language="ru" datatype="plaintext" original="converted">');
+        lines.push('    <body>');
+
+        entries.forEach(e => {
+            const idAttr = escapeXml(e.id || '');
+            const resnameAttr = e.context ? ' resname="' + escapeXml(e.context) + '"' : '';
+            const approvedAttr = e.fuzzy ? ' approved="no"' : ' approved="yes"';
+            lines.push('      <trans-unit id="' + idAttr + '"' + resnameAttr + approvedAttr + '>');
+            lines.push('        <source>' + escapeXml(e.source || '') + '</source>');
+            lines.push('        <target>' + escapeXml(e.target || '') + '</target>');
+            if (e.location) {
+                lines.push('        <context-group>');
+                lines.push('          <context context-type="sourcefile">' + escapeXml(e.location) + '</context>');
+                lines.push('        </context-group>');
+            }
+            if (e.developer_comments) {
+                e.developer_comments.split(' | ').forEach(c => {
+                    if (c) lines.push('        <note from="developer">' + escapeXml(c) + '</note>');
+                });
+            }
+            if (e.translator) {
+                e.translator.split(' | ').forEach(c => {
+                    if (c) lines.push('        <note from="translator">' + escapeXml(c) + '</note>');
+                });
+            }
+            lines.push('      </trans-unit>');
+        });
+
+        lines.push('    </body>');
+        lines.push('  </file>');
+        lines.push('</xliff>');
+        return lines.join('\n');
     }
 </script>
 </body>
