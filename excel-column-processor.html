@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обработчик колонок Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root{
+            --page:#EFE7D6; --ink:#2A1E0E; --ink-soft:#6b5c44;
+            --cream:#EDE2C4; --cream-edge:#B9A97D;
+            --rust:#C9642F; --rust-edge:#8F3E17; --rust-ink:#FBEEE0;
+            --moss:#7C9A56; --moss-edge:#516A34;
+            --panel:#FAF3E1; --panel-edge:#DCCDA0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Trebuchet MS', Verdana, sans-serif;
+            background: var(--page);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: var(--panel);
+            border: 1px solid var(--panel-edge);
+            border-radius: 24px;
+            box-shadow: 0 6px 0 var(--panel-edge), 0 20px 44px rgba(60,40,10,0.18);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 { font-size: 28px; font-weight: bold; color: var(--ink); margin-bottom: 12px; text-align: center; }
+        .subtitle { text-align: center; color: var(--ink-soft); font-size: 14px; margin-bottom: 32px; }
+
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 14px 12px;
+            border: 2px solid var(--cream-edge);
+            border-radius: 14px;
+            background: var(--cream);
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 0 var(--cream-edge);
+            transform: translateY(0);
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, background 0.15s;
+        }
+        .mode-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--cream-edge); }
+        .mode-btn.active {
+            background: var(--rust);
+            border-color: var(--rust-edge);
+            box-shadow: 0 4px 0 var(--rust-edge);
+        }
+        .mode-btn .mode-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+        .mode-btn .mode-desc {
+            font-size: 12px;
+            color: var(--ink-soft);
+            line-height: 1.4;
+        }
+        .mode-btn.active .mode-title { color: var(--rust-ink); }
+        .mode-btn.active .mode-desc { color: #F0DDC9; }
+
+        .upload-area {
+            border: 3px dashed var(--cream-edge);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: var(--cream);
+        }
+        .upload-area:hover { border-color: var(--rust-edge); background: #F3D9C6; }
+        .upload-area.dragover { border-color: var(--moss-edge); background: #E4EBD6; }
+        .upload-icon { font-size: 48px; margin-bottom: 16px; color: var(--rust-edge); }
+        .upload-text { font-size: 16px; color: var(--ink); margin-bottom: 8px; font-weight: 700; }
+        .upload-hint { font-size: 13px; color: var(--ink-soft); }
+        #fileInput { display: none; }
+
+        .file-list { margin-top: 24px; display: none; }
+        .file-item {
+            background: var(--cream);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .file-name { font-size: 14px; color: var(--ink); font-weight: 600; }
+        .file-status { font-size: 12px; color: var(--ink-soft); }
+
+        .process-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--rust);
+            color: var(--rust-ink);
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            margin-top: 24px;
+            box-shadow: 0 5px 0 var(--rust-edge);
+            transform: translateY(0);
+            transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+            display: none;
+        }
+        .process-btn:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--rust-edge); }
+        .process-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rust-edge); }
+        .process-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .info-box {
+            background: var(--cream);
+            border-left: 4px solid var(--rust);
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 24px;
+            font-size: 13px;
+            color: var(--ink-soft);
+            line-height: 1.6;
+        }
+        .info-box strong { color: var(--ink); }
+
+        .success-message {
+            background: #DCE7C9;
+            color: var(--moss-edge);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 16px;
+            display: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 Обработчик колонок Excel</h1>
+    <p class="subtitle">Выбери режим обработки</p>
+
+    <div class="mode-selector">
+        <div class="mode-btn active" id="modeA" onclick="setMode('A')">
+            <div class="mode-title">Режим 1: F → B</div>
+            <div class="mode-desc">Оставить A, перенести F в B, остальное удалить</div>
+        </div>
+        <div class="mode-btn" id="modeB" onclick="setMode('B')">
+            <div class="mode-title">Режим 2: A + B</div>
+            <div class="mode-desc">Оставить только колонки A и B как есть</div>
+        </div>
+    </div>
+
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">Перетащи файлы сюда</div>
+        <div class="upload-hint">или нажми чтобы выбрать (можно несколько)</div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" multiple>
+
+    <div class="file-list" id="fileList"></div>
+    <button class="process-btn" id="processBtn">Обработать файлы</button>
+    <div class="success-message" id="successMessage">✓ Файлы обработаны и скачаны!</div>
+
+    <div class="info-box" id="infoBox">
+        <strong>Режим 1 — F → B:</strong><br>
+        • Удаляет колонки B, C, D, E, G, H<br>
+        • Переносит колонку F в колонку B<br>
+        • Сохраняет колонку A как есть<br>
+        • Результат: только 2 колонки (A и B)
+    </div>
+</div>
+
+<script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const processBtn = document.getElementById('processBtn');
+    const successMessage = document.getElementById('successMessage');
+    const infoBox = document.getElementById('infoBox');
+
+    let selectedFiles = [];
+    let currentMode = 'A';
+
+    const infoTexts = {
+        A: '<strong>Режим 1 — F → B:</strong><br>• Удаляет колонки B, C, D, E, G, H<br>• Переносит колонку F в колонку B<br>• Сохраняет колонку A как есть<br>• Результат: только 2 колонки (A и B)',
+        B: '<strong>Режим 2 — A + B:</strong><br>• Удаляет все колонки начиная с C<br>• Сохраняет колонки A и B как есть<br>• Результат: только 2 колонки (A и B)'
+    };
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('modeA').classList.toggle('active', mode === 'A');
+        document.getElementById('modeB').classList.toggle('active', mode === 'B');
+        infoBox.innerHTML = infoTexts[mode];
+    }
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    function handleFiles(files) {
+        selectedFiles = Array.from(files).filter(f => f.name.endsWith('.xlsx') || f.name.endsWith('.xls'));
+        if (selectedFiles.length === 0) { alert('Выбери Excel файлы (.xlsx или .xls)'); return; }
+        displayFiles();
+    }
+
+    function displayFiles() {
+        fileList.innerHTML = '';
+        selectedFiles.forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `<span class="file-name">${file.name}</span><span class="file-status">Готов</span>`;
+            fileList.appendChild(item);
+        });
+        fileList.style.display = 'block';
+        processBtn.style.display = 'block';
+        successMessage.style.display = 'none';
+    }
+
+    processBtn.addEventListener('click', async () => {
+        processBtn.disabled = true;
+        processBtn.textContent = 'Обработка...';
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const statusSpan = fileList.children[i].querySelector('.file-status');
+            statusSpan.textContent = 'Обрабатывается...';
+            statusSpan.style.color = '#8F3E17';
+            await processFile(selectedFiles[i]);
+            statusSpan.textContent = '✓ Готово';
+            statusSpan.style.color = '#516A34';
+        }
+        processBtn.textContent = 'Обработать файлы';
+        processBtn.disabled = false;
+        successMessage.style.display = 'block';
+    });
+
+    async function processFile(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                workbook.SheetNames.forEach(sheetName => {
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    let newData;
+                    if (currentMode === 'A') {
+                        newData = jsonData.map(row => [row[0] || '', row[5] || '']);
+                    } else {
+                        newData = jsonData.map(row => [row[0] || '', row[1] || '']);
+                    }
+                    workbook.Sheets[sheetName] = XLSX.utils.aoa_to_sheet(newData);
+                });
+                const suffix = currentMode === 'A' ? '_обработано' : '_AB';
+                XLSX.writeFile(workbook, file.name.replace(/\.xlsx?$/i, suffix + '.xlsx'));
+                resolve();
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+</script>
+</body>
+</html>
