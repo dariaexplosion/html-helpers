@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Закрыть инструмент паролем</title>
+<style>
+    :root{
+        --page:#EFE7D6; --ink:#2A1E0E; --ink-soft:#6b5c44;
+        --cream:#EDE2C4; --cream-edge:#B9A97D;
+        --rust:#C9642F; --rust-edge:#8F3E17; --rust-ink:#FBEEE0;
+        --moss:#7C9A56; --moss-edge:#516A34;
+        --panel:#FAF3E1; --panel-edge:#DCCDA0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Trebuchet MS', Verdana, sans-serif;
+        background: var(--page);
+        color: var(--ink);
+        min-height: 100vh;
+        padding: 28px 20px 60px;
+    }
+    .container { max-width: 760px; margin: 0 auto; }
+    h1 { font-size: 25px; font-weight: bold; margin-bottom: 6px; }
+    .subtitle { color: var(--ink-soft); font-size: 14px; margin-bottom: 22px; line-height: 1.5; }
+
+    .panel {
+        background: var(--panel);
+        border-radius: 18px;
+        padding: 24px;
+        margin-bottom: 18px;
+        border: 1px solid var(--panel-edge);
+        box-shadow: 0 4px 0 var(--panel-edge), 0 10px 18px rgba(60,40,10,0.12);
+    }
+
+    label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 14px; }
+
+    .drop-zone {
+        border: 2px dashed var(--cream-edge);
+        border-radius: 14px;
+        padding: 36px 20px;
+        text-align: center;
+        color: var(--ink-soft);
+        cursor: pointer;
+        background: var(--cream);
+        transition: all 0.2s;
+        margin-bottom: 20px;
+    }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--rust-edge); background: #F3D9C6; color: var(--rust-edge); }
+    .drop-zone.loaded { border-color: var(--moss-edge); background: #E4EBD6; color: var(--moss-edge); }
+    .drop-zone input { display: none; }
+
+    input[type="text"], input[type="password"] {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid var(--cream-edge);
+        background: var(--cream);
+        color: var(--ink);
+        border-radius: 10px;
+        font-size: 14px;
+        font-family: inherit;
+        margin-bottom: 20px;
+    }
+    input:focus { outline: none; border-color: var(--rust-edge); }
+
+    button {
+        padding: 13px 24px;
+        border: none;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: inherit;
+        cursor: pointer;
+        background: var(--rust);
+        color: var(--rust-ink);
+        box-shadow: 0 4px 0 var(--rust-edge);
+        transform: translateY(0);
+        transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+    }
+    button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--rust-edge); }
+    button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--rust-edge); }
+    button:disabled { background: #D8CBA9; color: #9C8D67; box-shadow: 0 4px 0 #B9A97D; cursor: not-allowed; }
+
+    .file-meta {
+        display: none;
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: var(--cream);
+        border-radius: 10px;
+        font-size: 13px;
+    }
+    .file-meta.visible { display: block; }
+
+    .hint {
+        font-size: 12.5px;
+        color: var(--ink-soft);
+        line-height: 1.6;
+        margin-top: 16px;
+    }
+    .hint strong { color: var(--ink); }
+
+    .success {
+        display: none;
+        background: #DCE7C9;
+        color: var(--moss-edge);
+        padding: 14px 16px;
+        border-radius: 12px;
+        margin-top: 16px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .success.visible { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Закрыть инструмент паролем</h1>
+    <p class="subtitle">Загружаешь .html-файл хелпера → задаёшь пароль → скачиваешь зашифрованную версию. Оригинал не трогается. Всё шифрование происходит прямо в этом браузере — файл никуда не отправляется.</p>
+
+    <div class="panel">
+        <label>1. Файл инструмента</label>
+        <div class="drop-zone" id="dropZone">
+            <div>📁 Перетащи .html файл сюда или нажми, чтобы выбрать</div>
+        </div>
+        <input type="file" id="fileInput" accept=".html">
+        <div class="file-meta" id="fileMeta"></div>
+
+        <label style="margin-top: 20px;">2. Название (покажется на экране блокировки)</label>
+        <input type="text" id="toolName" placeholder="Например: Генератор тем писем">
+
+        <label>3. Пароль</label>
+        <input type="password" id="password" placeholder="Придумай пароль подлиннее">
+
+        <button id="lockBtn" disabled>Зашифровать и скачать</button>
+
+        <div class="success" id="successMsg">✓ Готово! Файл скачан — залей его на GitHub вместо оригинала.</div>
+
+        <p class="hint">
+            <strong>Как это работает:</strong> файл шифруется алгоритмом AES-256 прямо на твоём компьютере. В репозитории на GitHub будет лежать нечитаемая шифрованная версия — открыть код страницы или посмотреть файл в репозитории без пароля не получится.<br><br>
+            <strong>Важно:</strong> пароль общий для всех, кому его дашь — это не отдельные логины с возможностью отозвать доступ у одного человека. Чем длиннее и небанальнее пароль, тем лучше. Если забудешь пароль — расшифровать файл без него будет невозможно, сохрани оригинал отдельно.
+        </p>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileMeta = document.getElementById('fileMeta');
+    const toolNameInput = document.getElementById('toolName');
+    const passwordInput = document.getElementById('password');
+    const lockBtn = document.getElementById('lockBtn');
+    const successMsg = document.getElementById('successMsg');
+
+    let selectedFile = null;
+    let selectedFileText = '';
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+    function handleFile(file) {
+        if (!file.name.endsWith('.html')) {
+            alert('Нужен .html файл');
+            return;
+        }
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = e => {
+            selectedFileText = e.target.result;
+            dropZone.classList.add('loaded');
+            fileMeta.classList.add('visible');
+            fileMeta.textContent = '✓ ' + file.name + ' (' + Math.round(file.size / 1024) + ' КБ)';
+            const guessedName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+            if (!toolNameInput.value) toolNameInput.value = guessedName;
+            checkReady();
+        };
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    toolNameInput.addEventListener('input', checkReady);
+    passwordInput.addEventListener('input', checkReady);
+
+    function checkReady() {
+        lockBtn.disabled = !(selectedFileText && toolNameInput.value.trim() && passwordInput.value.length >= 4);
+    }
+
+    async function deriveKey(password, salt, iterations) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+            'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+        );
+        return crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt']
+        );
+    }
+
+    function bufToBase64(buf) {
+        let binary = '';
+        const bytes = new Uint8Array(buf);
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+    }
+
+    lockBtn.addEventListener('click', async () => {
+        lockBtn.disabled = true;
+        lockBtn.textContent = 'Шифрую…';
+        successMsg.classList.remove('visible');
+
+        try {
+            const iterations = 250000;
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const key = await deriveKey(passwordInput.value, salt, iterations);
+
+            const enc = new TextEncoder();
+            const cipherBuf = await crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv },
+                key,
+                enc.encode(selectedFileText)
+            );
+
+            const payload = {
+                salt: bufToBase64(salt),
+                iv: bufToBase64(iv),
+                data: bufToBase64(cipherBuf),
+                iterations
+            };
+
+            const lockPageTemplate = await (await fetch('lock-template.html')).text();
+            const toolNameEscaped = String(toolNameInput.value).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const finalPage = lockPageTemplate
+                .replace('__TOOL_NAME__', toolNameEscaped)
+                .replace('__PAYLOAD__', JSON.stringify(payload));
+
+            const blob = new Blob([finalPage], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = selectedFile.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            successMsg.classList.add('visible');
+        } catch (err) {
+            alert('Ошибка шифрования: ' + err.message);
+        } finally {
+            lockBtn.disabled = false;
+            lockBtn.textContent = 'Зашифровать и скачать';
+        }
+    });
+</script>
+</body>
+</html>

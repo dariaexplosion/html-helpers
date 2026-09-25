@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Закрытый доступ</title>
+<style>
+  :root{
+    --page: #EFE7D6;
+    --body-1: #3B2C22;
+    --body-2: #2A1F18;
+    --screen: #CBD1BE;
+    --screen-ink: #2E332A;
+    --cream: #EDE2C4;
+    --cream-edge: #B9A97D;
+    --cream-ink: #2A1E0E;
+    --rust: #C9642F;
+    --rust-edge: #8F3E17;
+    --rust-ink: #FBEEE0;
+  }
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  body{
+    font-family: 'Trebuchet MS', Verdana, sans-serif;
+    background: var(--page);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+  }
+  .lock-card{
+    width: 100%;
+    max-width: 420px;
+    background: linear-gradient(160deg, var(--body-1), var(--body-2));
+    border-radius: 34px;
+    padding: 26px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 -8px 18px rgba(0,0,0,0.35) inset,
+      0 26px 46px rgba(30,18,10,0.35),
+      0 8px 0 #1c130d;
+  }
+  .screen{
+    background: linear-gradient(175deg, #D4DAC5, var(--screen));
+    border-radius: 18px;
+    padding: 20px 22px;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.4);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .screen .icon{ font-size: 28px; margin-bottom: 6px; }
+  .screen h1{
+    font-size: 19px;
+    color: var(--screen-ink);
+    font-weight: bold;
+  }
+  .screen p{
+    font-size: 12px;
+    color: var(--screen-ink);
+    opacity: 0.75;
+    margin-top: 4px;
+  }
+  .field{
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  input[type="password"]{
+    flex: 1;
+    padding: 13px 16px;
+    border: none;
+    border-radius: 14px;
+    background: var(--cream);
+    color: var(--cream-ink);
+    font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.15);
+  }
+  input[type="password"]::placeholder{ color: #8a7a5c; }
+  button{
+    padding: 13px 22px;
+    border: none;
+    border-radius: 14px;
+    background: var(--rust);
+    color: var(--rust-ink);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--rust-edge);
+    transform: translateY(0);
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+  }
+  button:hover{ transform: translateY(-2px); box-shadow: 0 6px 0 var(--rust-edge); }
+  button:active{ transform: translateY(3px); box-shadow: 0 1px 0 var(--rust-edge); }
+  .error{
+    display: none;
+    color: #FBEEE0;
+    background: #8F3E17;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 12.5px;
+    text-align: center;
+  }
+  .error.visible{ display: block; }
+  .back{
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 12px;
+    color: #C9BFA6;
+    text-decoration: none;
+    opacity: 0.7;
+  }
+  .back:hover{ opacity: 1; }
+</style>
+</head>
+<body>
+<div class="lock-card">
+  <div class="screen">
+    <div class="icon">🔒</div>
+    <h1>__TOOL_NAME__</h1>
+    <p>Этот инструмент закрыт паролем</p>
+  </div>
+  <div class="field">
+    <input type="password" id="pw" placeholder="Пароль" autocomplete="off">
+    <button id="unlockBtn">Открыть</button>
+  </div>
+  <p class="error" id="errorMsg">Неверный пароль</p>
+  <a class="back" href="index.html">← вернуться в библиотеку</a>
+</div>
+
+<script>
+const PAYLOAD = __PAYLOAD__;
+
+async function deriveKey(password, saltB64, iterations) {
+    const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+    );
+}
+
+async function tryUnlock(password) {
+    try {
+        const key = await deriveKey(password, PAYLOAD.salt, PAYLOAD.iterations);
+        const iv = Uint8Array.from(atob(PAYLOAD.iv), c => c.charCodeAt(0));
+        const data = Uint8Array.from(atob(PAYLOAD.data), c => c.charCodeAt(0));
+        const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+        return { ok: true, text: new TextDecoder().decode(plainBuf) };
+    } catch (e) {
+        return { ok: false };
+    }
+}
+
+async function attemptUnlock() {
+    const pw = document.getElementById('pw').value;
+    const errorMsg = document.getElementById('errorMsg');
+    const btn = document.getElementById('unlockBtn');
+    btn.disabled = true;
+    const result = await tryUnlock(pw);
+    if (result.ok) {
+        document.open();
+        document.write(result.text);
+        document.close();
+    } else {
+        errorMsg.classList.add('visible');
+        btn.disabled = false;
+        document.getElementById('pw').value = '';
+        document.getElementById('pw').focus();
+    }
+}
+
+document.getElementById('unlockBtn').addEventListener('click', attemptUnlock);
+document.getElementById('pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') attemptUnlock();
+});
+document.getElementById('pw').focus();
+</script>
+</body>
+</html>
